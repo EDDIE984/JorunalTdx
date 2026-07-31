@@ -186,20 +186,49 @@ export function TradeForm({ journal }: TradeFormProps) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>Cuenta y Resultado</CardTitle>
+          <CardTitle>Cierre y Resultado</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <ReadOnlyField label="Valor Inicial MetaTrader" value={cuentaActualParaRiesgo} />
-          <Field label="Valor Actual MetaTrader">
+          <ReadOnlyField label="Saldo inicial de la cuenta" value={cuentaActualParaRiesgo} />
+          <Field label="Saldo final de la cuenta">
             <Input
               type="number"
               step="0.01"
+              min="0"
               value={valorActualMetaTrader}
               onChange={(e) => handleValorActualChange(Number(e.target.value))}
             />
+            <p className="text-xs text-muted-foreground">
+              Saldo/equity que muestra MetaTrader después de cerrar el trade.
+            </p>
           </Field>
           <ReadOnlyField label="Operación" value={operacion.valorOperacion} />
           <ReadOnlyField label="Resultado Trade" value={operacion.resultadoOperacion} />
+          <Field label="Motivo de cierre">
+            <Select
+              value={motivoCierre}
+              onValueChange={(value) => setMotivoCierre(value as MotivoCierreRegistro)}
+            >
+              <SelectTrigger className="w-full" aria-label="Motivo de cierre">
+                <SelectValue placeholder="Selecciona una opción" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TAKE_PROFIT">Take Profit alcanzado</SelectItem>
+                <SelectItem value="STOP_LOSS">Stop Loss alcanzado</SelectItem>
+                <SelectItem value="MANUAL">Cierre manual anticipado</SelectItem>
+                <SelectItem value="BREAK_EVEN">Break-even</SelectItem>
+                <SelectItem value="PARCIAL">Cierre parcial</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <ReadOnlyField
+            label="R realizado"
+            value={
+              tradeCalc.riesgoValor > 0
+                ? round2(operacion.valorOperacion / tradeCalc.riesgoValor)
+                : 0
+            }
+          />
         </CardContent>
       </Card>
 
@@ -232,7 +261,7 @@ export function TradeForm({ journal }: TradeFormProps) {
           <Field label="% Riesgo">
             <Input
               type="number"
-              step="0.1"
+              step="0.01"
               min="0"
               value={riesgoPct}
               onChange={(e) => setRiesgoPct(Number(e.target.value))}
@@ -314,39 +343,6 @@ export function TradeForm({ journal }: TradeFormProps) {
               onChange={(e) => setPrecioSalida(Number(e.target.value) || 0)}
             />
           </Field>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Cierre del Trade</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Motivo de cierre">
-            <Select
-              value={motivoCierre}
-              onValueChange={(value) => setMotivoCierre(value as MotivoCierreRegistro)}
-            >
-              <SelectTrigger className="w-full" aria-label="Motivo de cierre">
-                <SelectValue placeholder="Selecciona una opción" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TAKE_PROFIT">Take Profit alcanzado</SelectItem>
-                <SelectItem value="STOP_LOSS">Stop Loss alcanzado</SelectItem>
-                <SelectItem value="MANUAL">Cierre manual anticipado</SelectItem>
-                <SelectItem value="BREAK_EVEN">Break-even</SelectItem>
-                <SelectItem value="PARCIAL">Cierre parcial</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <ReadOnlyField
-            label="R realizado"
-            value={
-              tradeCalc.riesgoValor > 0
-                ? round2(operacion.valorOperacion / tradeCalc.riesgoValor)
-                : 0
-            }
-          />
         </CardContent>
       </Card>
 

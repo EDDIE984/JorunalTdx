@@ -103,7 +103,7 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
                 "Resultado",
                 "Motivo Cierre",
                 "R Realizado",
-                "Valor MetaTrader",
+                "Saldo final de la cuenta",
                 "Instrumento",
                 "% Riesgo",
                 "Observaciones",

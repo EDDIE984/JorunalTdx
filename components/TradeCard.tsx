@@ -113,7 +113,7 @@ export function TradeCard({
               </div>
             ) : null}
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Valor MetaTrader</span>
+              <span className="text-muted-foreground">Saldo final de la cuenta</span>
               {isEditing ? (
                 <Input
                   autoFocus
