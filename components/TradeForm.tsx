@@ -207,8 +207,10 @@ export function TradeForm({ journal }: TradeFormProps) {
                 )
               }
               className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium text-white",
-                resultadoOperacion === "POSITIVO" ? "bg-success" : "bg-destructive"
+                "rounded-lg px-3 py-2 text-sm font-medium",
+                resultadoOperacion === "POSITIVO"
+                  ? "bg-success text-success-foreground"
+                  : "bg-destructive text-destructive-foreground"
               )}
             >
               {resultadoOperacion}

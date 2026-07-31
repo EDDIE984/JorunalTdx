@@ -30,7 +30,7 @@ export function RiskAlerts({
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {excedeLimiteDiario ? <Badge variant="destructive">⚠ Límite diario</Badge> : null}
-          <p className="text-sm text-muted-foreground">
+          <p className={`text-sm ${excedeLimiteDiario ? "font-medium text-foreground" : "text-muted-foreground"}`}>
             Pérdida hoy: ${perdidaHoy} ({perdidaHoyPct}% de tu cuenta) — límite {limiteDiarioPct}%
             {excedeLimiteDiario
               ? " — alcanzaste tu límite diario, considera no operar más hoy."
@@ -39,7 +39,7 @@ export function RiskAlerts({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {excedeRacha ? <Badge variant="destructive">⚠ Racha de pérdidas</Badge> : null}
-          <p className="text-sm text-muted-foreground">
+          <p className={`text-sm ${excedeRacha ? "font-medium text-foreground" : "text-muted-foreground"}`}>
             Racha de pérdidas: {rachaActual} — límite {journal.limite_racha_perdidas}
             {excedeRacha ? " — llegaste a tu límite de racha, considera hacer una pausa." : ""}
           </p>

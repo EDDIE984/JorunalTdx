@@ -39,7 +39,7 @@ export function TradeCard({
   isPending,
 }: TradeCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const positivo = row.resultado_operacion === "POSITIVO";
+  const positivo = row.valor_operacion >= 0;
   const isEditing = editingId === row.id;
 
   return (
@@ -51,6 +51,7 @@ export function TradeCard({
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
           className="flex items-center justify-between text-left"
         >
           <div>
@@ -72,7 +73,10 @@ export function TradeCard({
           <div className="flex flex-col gap-2 border-t border-border pt-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Resultado</span>
-              <Badge variant={positivo ? "default" : "destructive"}>
+              <Badge
+                variant={positivo ? undefined : "destructive"}
+                className={positivo ? "bg-success/10 text-success" : undefined}
+              >
                 {row.resultado_operacion}
               </Badge>
             </div>

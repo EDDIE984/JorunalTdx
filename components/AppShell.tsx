@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { BookOpenText, LayoutDashboard, Settings as SettingsIcon } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { cn } from "@/lib/utils";
@@ -22,8 +21,6 @@ interface AppShellProps {
 }
 
 export function AppShell({ activo, nombre, titulo, children }: AppShellProps) {
-  const pathname = usePathname();
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="bg-primary text-primary-foreground px-4 py-3 sm:px-6">
@@ -57,9 +54,9 @@ export function AppShell({ activo, nombre, titulo, children }: AppShellProps) {
         {children}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 flex border-t border-border bg-card sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 flex border-t border-border bg-card pb-[env(safe-area-inset-bottom)] sm:hidden">
         {NAV_ITEMS.map(({ href, seccion, label, Icon }) => {
-          const isActive = seccion === activo || pathname === href;
+          const isActive = seccion === activo;
           return (
             <Link
               key={href}
