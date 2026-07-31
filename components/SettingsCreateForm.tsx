@@ -4,6 +4,10 @@ import { useState, useTransition } from "react";
 import { createConfiguracion } from "@/lib/journal/actions";
 import { getDefaultPipValue } from "@/lib/journal/instruments";
 import { DEFAULT_OBJETIVO_PCT } from "@/lib/journal/calculations";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export function SettingsCreateForm() {
   const [valorInicial, setValorInicial] = useState(0);
@@ -52,96 +56,95 @@ export function SettingsCreateForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded border border-black/10 dark:border-white/15 p-4 flex flex-col gap-4"
-    >
-      <h2 className="font-semibold">Nueva Configuración</h2>
+    <Card>
+      <CardHeader>
+        <CardTitle>Nueva Configuración</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label>Valor Inicial</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={valorInicial || ""}
+              onChange={(e) => setValorInicial(Number(e.target.value) || 0)}
+              className="w-full sm:w-64"
+            />
+          </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Valor Inicial</span>
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={valorInicial || ""}
-          onChange={(e) => setValorInicial(Number(e.target.value) || 0)}
-          className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2 w-full sm:w-64"
-        />
-      </label>
+          <div className="flex flex-col gap-1.5">
+            <Label>Objetivo %</Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              value={objetivoPctInput}
+              onChange={(e) => setObjetivoPctInput(Number(e.target.value))}
+              className="w-full sm:w-64"
+            />
+            <p className="text-xs text-muted-foreground">
+              % de la cuenta que quieres alcanzar como meta. Por defecto 10%, editable.
+            </p>
+          </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Objetivo %</span>
-        <input
-          type="number"
-          step="0.1"
-          min="0"
-          max="100"
-          value={objetivoPctInput}
-          onChange={(e) => setObjetivoPctInput(Number(e.target.value))}
-          className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2 w-full sm:w-64"
-        />
-        <p className="text-xs text-black/60 dark:text-white/60">
-          % de la cuenta que quieres alcanzar como meta. Por defecto 10%, editable.
-        </p>
-      </label>
+          <div className="flex flex-col gap-1.5">
+            <Label>Valor de Pip por defecto</Label>
+            <Input
+              type="number"
+              step="0.0001"
+              min="0"
+              value={pipValueDefault}
+              onChange={(e) => setPipValueDefault(Number(e.target.value))}
+              className="w-full sm:w-64"
+            />
+          </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Valor de Pip por defecto</span>
-        <input
-          type="number"
-          step="0.0001"
-          min="0"
-          value={pipValueDefault}
-          onChange={(e) => setPipValueDefault(Number(e.target.value))}
-          className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2 w-full sm:w-64"
-        />
-      </label>
+          <div className="flex flex-col gap-1.5">
+            <Label>Límite de Pérdida Diaria %</Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              value={limitePerdidaDiariaInput}
+              onChange={(e) => setLimitePerdidaDiariaInput(Number(e.target.value))}
+              className="w-full sm:w-64"
+            />
+            <p className="text-xs text-muted-foreground">
+              % de tu cuenta que, si pierdes en un día, te avisa que ya llegaste al límite. Por
+              defecto 3%.
+            </p>
+          </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Límite de Pérdida Diaria %</span>
-        <input
-          type="number"
-          step="0.1"
-          min="0"
-          max="100"
-          value={limitePerdidaDiariaInput}
-          onChange={(e) => setLimitePerdidaDiariaInput(Number(e.target.value))}
-          className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2 w-full sm:w-64"
-        />
-        <p className="text-xs text-black/60 dark:text-white/60">
-          % de tu cuenta que, si pierdes en un día, te avisa que ya llegaste al límite. Por defecto 3%.
-        </p>
-      </label>
+          <div className="flex flex-col gap-1.5">
+            <Label>Límite de Racha de Pérdidas</Label>
+            <Input
+              type="number"
+              step="1"
+              min="1"
+              value={limiteRachaPerdidas}
+              onChange={(e) => setLimiteRachaPerdidas(Number(e.target.value))}
+              className="w-full sm:w-64"
+            />
+            <p className="text-xs text-muted-foreground">
+              Número de pérdidas seguidas que te avisan que es momento de pausar. Por defecto 3.
+            </p>
+          </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Límite de Racha de Pérdidas</span>
-        <input
-          type="number"
-          step="1"
-          min="1"
-          value={limiteRachaPerdidas}
-          onChange={(e) => setLimiteRachaPerdidas(Number(e.target.value))}
-          className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2 w-full sm:w-64"
-        />
-        <p className="text-xs text-black/60 dark:text-white/60">
-          Número de pérdidas seguidas que te avisan que es momento de pausar. Por defecto 3.
-        </p>
-      </label>
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
 
-      {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={isPending}
-        className="self-start rounded bg-black text-white dark:bg-white dark:text-black px-4 py-2 font-medium disabled:opacity-50"
-      >
-        {isPending ? "Guardando…" : "Crear configuración"}
-      </button>
-    </form>
+          <Button type="submit" disabled={isPending} className="self-start">
+            {isPending ? "Guardando…" : "Crear configuración"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

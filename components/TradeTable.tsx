@@ -3,6 +3,15 @@
 import { useState, useTransition } from "react";
 import type { JournalDetailRow } from "@/lib/types";
 import { deleteTradeDetail, updateTradeDetail } from "@/lib/journal/actions";
+import { TradeCard } from "@/components/TradeCard";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -44,17 +53,40 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
   }
 
   return (
-    <section className="rounded border border-black/10 dark:border-white/15 p-4 flex flex-col gap-3">
+    <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
       <h2 className="font-semibold">Journal</h2>
       {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       ) : null}
-      <div className="overflow-x-auto">
-        <table className="text-xs sm:text-sm w-full border-collapse">
-          <thead>
-            <tr className="text-left border-b border-black/10 dark:border-white/15">
+
+      <div className="flex flex-col gap-2 sm:hidden">
+        {details.map((row) => (
+          <TradeCard
+            key={row.id}
+            row={row}
+            editingId={editingId}
+            editingValue={editingValue}
+            onStartEdit={startEdit}
+            onEditingValueChange={setEditingValue}
+            onCommitEdit={commitEdit}
+            onCancelEdit={() => setEditingId(null)}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
+        ))}
+        {details.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            Aún no hay trades registrados.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
               {[
                 "Fecha",
                 "Operación",
@@ -75,28 +107,19 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
                 "Ganancia Total Parcial",
                 "",
               ].map((h) => (
-                <th key={h} className="whitespace-nowrap px-2 py-1 font-medium">
-                  {h}
-                </th>
+                <TableHead key={h}>{h}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {details.map((row) => {
               const negative = row.valor_operacion <= 0;
               return (
-                <tr
-                  key={row.id}
-                  className={`border-b border-black/5 dark:border-white/10 ${
-                    negative ? "text-red-600 dark:text-red-400" : ""
-                  }`}
-                >
-                  <td className="whitespace-nowrap px-2 py-1">
-                    {formatDate(row.fecha_operacion)}
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.tipo}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.valor_operacion}</td>
-                  <td className="whitespace-nowrap px-2 py-1">
+                <TableRow key={row.id} className={negative ? "text-destructive" : ""}>
+                  <TableCell>{formatDate(row.fecha_operacion)}</TableCell>
+                  <TableCell>{row.tipo}</TableCell>
+                  <TableCell>{row.valor_operacion}</TableCell>
+                  <TableCell>
                     {editingId === row.id ? (
                       <input
                         autoFocus
@@ -109,7 +132,7 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
                           if (e.key === "Enter") commitEdit(row.id);
                           if (e.key === "Escape") setEditingId(null);
                         }}
-                        className="w-24 rounded border border-black/15 dark:border-white/20 bg-transparent px-1 py-0.5"
+                        className="w-24 rounded-lg border border-input bg-transparent px-1 py-0.5"
                       />
                     ) : (
                       <button
@@ -120,49 +143,43 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
                         {row.valor_metatrader}
                       </button>
                     )}
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.instrumento}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.riesgo_pct}%</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.observaciones}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.riesgo_valor}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.lotaje}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.lotaje_parcial}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.tp}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.sl}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.ganancia_estimada}</td>
-                  <td className="whitespace-nowrap px-2 py-1">{row.perdida_estimada}</td>
-                  <td className="whitespace-nowrap px-2 py-1">
-                    {row.num_pips_regla_parciales}
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-1">
-                    {row.ganancia_parcial_parciales}
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-1">
-                    {row.ganancia_total_parciales}
-                  </td>
-                  <td className="whitespace-nowrap px-2 py-1">
+                  </TableCell>
+                  <TableCell>{row.instrumento}</TableCell>
+                  <TableCell>{row.riesgo_pct}%</TableCell>
+                  <TableCell>{row.observaciones}</TableCell>
+                  <TableCell>{row.riesgo_valor}</TableCell>
+                  <TableCell>{row.lotaje}</TableCell>
+                  <TableCell>{row.lotaje_parcial}</TableCell>
+                  <TableCell>{row.tp}</TableCell>
+                  <TableCell>{row.sl}</TableCell>
+                  <TableCell>{row.ganancia_estimada}</TableCell>
+                  <TableCell>{row.perdida_estimada}</TableCell>
+                  <TableCell>{row.num_pips_regla_parciales}</TableCell>
+                  <TableCell>{row.ganancia_parcial_parciales}</TableCell>
+                  <TableCell>{row.ganancia_total_parciales}</TableCell>
+                  <TableCell>
                     <button
                       type="button"
                       title="Borrar Registro"
                       disabled={isPending}
                       onClick={() => handleDelete(row.id)}
-                      className="text-red-600 dark:text-red-400 disabled:opacity-50"
+                      className="text-destructive disabled:opacity-50"
                     >
                       Borrar
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
             {details.length === 0 ? (
-              <tr>
-                <td colSpan={18} className="px-2 py-4 text-center text-black/50 dark:text-white/50">
+              <TableRow>
+                <TableCell colSpan={18} className="text-center text-muted-foreground">
                   Aún no hay trades registrados.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : null}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );

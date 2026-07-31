@@ -5,12 +5,12 @@ import type { WinLossDistribucion } from "@/lib/journal/stats";
 
 export function WinLossDonutChart({ data }: { data: WinLossDistribucion }) {
   const chartData = [
-    { name: "Ganados", value: data.wins, color: "#22c55e" },
-    { name: "Perdidos", value: data.losses, color: "#ef4444" },
+    { name: "Ganados", value: data.wins, color: "#16a34a" },
+    { name: "Perdidos", value: data.losses, color: "#dc2626" },
   ];
 
   return (
-    <section className="rounded border border-black/10 dark:border-white/15 p-4 flex flex-col gap-3">
+    <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
       <h2 className="font-semibold">Distribución Win/Loss</h2>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
