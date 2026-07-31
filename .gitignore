@@ -42,3 +42,6 @@ next-env.d.ts
 
 # superpowers scratch (brainstorming mockups, sdd workspaces)
 /.superpowers/
+
+# git worktrees for isolated feature work
+/.worktrees/
