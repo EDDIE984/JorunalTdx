@@ -3,13 +3,15 @@
 import { useState, useTransition } from "react";
 import type { JournalRow } from "@/lib/types";
 import { closeConfiguracion } from "@/lib/journal/actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 function Field({ label, value }: { label: string; value: string | number }) {
   return (
-    <>
-      <span className="text-sm text-black/60 dark:text-white/60">{label}</span>
+    <div className="flex flex-col gap-0.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
       <span className="text-sm font-medium">{value}</span>
-    </>
+    </div>
   );
 }
 
@@ -29,39 +31,37 @@ export function SettingsActivePanel({ journal }: { journal: JournalRow }) {
   }
 
   return (
-    <section className="rounded border border-black/10 dark:border-white/15 p-4 flex flex-col gap-3">
-      <h2 className="font-semibold">Configuración Activa</h2>
+    <Card>
+      <CardHeader>
+        <CardTitle>Configuración Activa</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+          <Field label="Valor Inicial" value={journal.valor_inicio} />
+          <Field label="Objetivo %" value={`${(journal.porc_objetivo * 100).toFixed(2)}%`} />
+          <Field label="Objetivo $" value={journal.valor_objetivo} />
+          <Field label="Valor Actual (informativo)" value={journal.valor_resultado_mtrader} />
+          <Field label="Meta % restante" value={`${journal.porc_meta}%`} />
+          <Field label="Meta $ restante" value={journal.valor_meta} />
+          <Field label="Valor de Pip por defecto" value={journal.pip_value_default} />
+          <Field
+            label="Límite Pérdida Diaria"
+            value={`${(journal.limite_perdida_diaria_pct * 100).toFixed(2)}%`}
+          />
+          <Field label="Límite Racha Pérdidas" value={journal.limite_racha_perdidas} />
+          <Field label="Estado" value={journal.estado} />
+        </div>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-        <Field label="Valor Inicial" value={journal.valor_inicio} />
-        <Field label="Objetivo %" value={`${(journal.porc_objetivo * 100).toFixed(2)}%`} />
-        <Field label="Objetivo $" value={journal.valor_objetivo} />
-        <Field label="Valor Actual (informativo)" value={journal.valor_resultado_mtrader} />
-        <Field label="Meta % restante" value={`${journal.porc_meta}%`} />
-        <Field label="Meta $ restante" value={journal.valor_meta} />
-        <Field label="Valor de Pip por defecto" value={journal.pip_value_default} />
-        <Field
-          label="Límite Pérdida Diaria"
-          value={`${(journal.limite_perdida_diaria_pct * 100).toFixed(2)}%`}
-        />
-        <Field label="Límite Racha Pérdidas" value={journal.limite_racha_perdidas} />
-        <Field label="Estado" value={journal.estado} />
-      </div>
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
 
-      {error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      ) : null}
-
-      <button
-        type="button"
-        disabled={isPending}
-        onClick={handleClose}
-        className="self-start rounded bg-black text-white dark:bg-white dark:text-black px-4 py-2 font-medium disabled:opacity-50"
-      >
-        {isPending ? "Cerrando…" : "Cerrar configuración"}
-      </button>
-    </section>
+        <Button variant="destructive" disabled={isPending} onClick={handleClose} className="self-start">
+          {isPending ? "Cerrando…" : "Cerrar configuración"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
