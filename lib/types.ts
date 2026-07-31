@@ -25,8 +25,15 @@ export interface JournalRow {
   updated_at: string;
 }
 
-export type ResultadoOperacion = "POSITIVO" | "NEGATIVO";
+export type ResultadoOperacion = "POSITIVO" | "NEGATIVO" | "BREAK_EVEN";
 export type TipoOperacion = "BUY" | "SELL";
+export type MotivoCierre =
+  | "TAKE_PROFIT"
+  | "STOP_LOSS"
+  | "MANUAL"
+  | "BREAK_EVEN"
+  | "PARCIAL"
+  | "SIN_ESPECIFICAR";
 
 export interface JournalDetailRow {
   id: string;
@@ -37,6 +44,8 @@ export interface JournalDetailRow {
   instrumento: string | null;
   lotaje: number;
   lotaje_parcial: number;
+  porcentaje_parcial: number | null;
+  lotaje_restante: number | null;
   tp: number;
   sl: number;
   ganancia_estimada: number;
@@ -45,6 +54,7 @@ export interface JournalDetailRow {
   valor_resultado: number;
   num_pips_regla_parciales: number;
   ganancia_parcial_parciales: number;
+  ganancia_restante_parcial: number | null;
   ganancia_total_parciales: number;
   valor_cuenta: number;
   fecha_operacion: string;
@@ -55,5 +65,7 @@ export interface JournalDetailRow {
   precio_entrada: number | null;
   precio_sl: number | null;
   precio_tp: number | null;
+  precio_salida: number | null;
+  motivo_cierre: MotivoCierre;
   created_at: string;
 }

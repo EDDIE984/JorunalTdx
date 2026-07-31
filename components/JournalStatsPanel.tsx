@@ -29,6 +29,12 @@ export function JournalStatsPanel({
       <StatCard label="Racha Pérdidas Máxima" value={String(stats.rachaPerdidasMaxima)} />
       <StatCard label="Drawdown Máximo ($)" value={String(stats.drawdownMaximoValor)} tone="negative" />
       <StatCard label="Drawdown Máximo (%)" value={`${stats.drawdownMaximoPct}%`} tone="negative" />
+      <StatCard
+        label="Cierres Manuales"
+        value={`${stats.cierresManuales} (${stats.cierresManualesPct}%)`}
+      />
+      <StatCard label="Break-even" value={String(stats.breakEven)} />
+      <StatCard label="R Promedio" value={`${stats.rPromedio}R`} tone="accent" />
     </section>
   );
 }

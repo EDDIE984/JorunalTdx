@@ -15,6 +15,15 @@ function formatDate(value: string) {
   });
 }
 
+const MOTIVO_CIERRE_LABEL = {
+  TAKE_PROFIT: "Take Profit",
+  STOP_LOSS: "Stop Loss",
+  MANUAL: "Manual anticipado",
+  BREAK_EVEN: "Break-even",
+  PARCIAL: "Parcial",
+  SIN_ESPECIFICAR: "Sin especificar",
+} as const;
+
 interface TradeCardProps {
   row: JournalDetailRow;
   editingId: string | null;
@@ -39,13 +48,14 @@ export function TradeCard({
   isPending,
 }: TradeCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const positivo = row.valor_operacion >= 0;
+  const positivo = row.valor_operacion > 0;
+  const breakEven = row.valor_operacion === 0;
   const isEditing = editingId === row.id;
 
   return (
     <Card
       className="border-l-4"
-      style={{ borderLeftColor: positivo ? "#16a34a" : "#dc2626" }}
+      style={{ borderLeftColor: breakEven ? "#64748b" : positivo ? "#16a34a" : "#dc2626" }}
     >
       <CardContent className="flex flex-col gap-2">
         <button
@@ -61,8 +71,12 @@ export function TradeCard({
             </p>
           </div>
           <div className="text-right">
-            <p className={`text-sm font-bold ${positivo ? "text-success" : "text-destructive"}`}>
-              {row.valor_operacion >= 0 ? "+" : ""}
+            <p
+              className={`text-sm font-bold ${
+                breakEven ? "text-muted-foreground" : positivo ? "text-success" : "text-destructive"
+              }`}
+            >
+              {row.valor_operacion > 0 ? "+" : ""}
               {row.valor_operacion}
             </p>
             <p className="text-xs text-muted-foreground">${row.valor_metatrader}</p>
@@ -74,12 +88,30 @@ export function TradeCard({
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Resultado</span>
               <Badge
-                variant={positivo ? undefined : "destructive"}
+                variant={breakEven ? "secondary" : positivo ? undefined : "destructive"}
                 className={positivo ? "bg-success/10 text-success" : undefined}
               >
                 {row.resultado_operacion}
               </Badge>
             </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Motivo de cierre</span>
+              <span>{MOTIVO_CIERRE_LABEL[row.motivo_cierre] ?? "Sin especificar"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">R realizado</span>
+              <span>
+                {row.riesgo_valor > 0
+                  ? `${Math.round((row.valor_operacion / row.riesgo_valor) * 100) / 100}R`
+                  : "—"}
+              </span>
+            </div>
+            {row.precio_salida ? (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Precio de salida</span>
+                <span>{row.precio_salida}</span>
+              </div>
+            ) : null}
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Valor MetaTrader</span>
               {isEditing ? (
@@ -121,6 +153,16 @@ export function TradeCard({
               </span>
             </div>
             <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Lotaje restante</span>
+              <span>
+                {row.lotaje_restante ?? Math.round((row.lotaje - row.lotaje_parcial) * 100) / 100}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Parciales %</span>
+              <span>{row.porcentaje_parcial ?? "—"}</span>
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-muted-foreground">TP / SL</span>
               <span>
                 {row.tp} / {row.sl}
@@ -133,7 +175,7 @@ export function TradeCard({
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">PIPS Parcial</span>
+              <span className="text-muted-foreground">PIPS Parciales</span>
               <span>{row.num_pips_regla_parciales}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -141,6 +183,10 @@ export function TradeCard({
               <span>
                 {row.ganancia_parcial_parciales} / {row.ganancia_total_parciales}
               </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Ganancia restante al TP</span>
+              <span>{row.ganancia_restante_parcial ?? "—"}</span>
             </div>
             {row.observaciones ? (
               <div className="flex flex-col gap-0.5">

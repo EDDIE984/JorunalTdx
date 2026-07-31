@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import type { JournalRow, TipoOperacion, ResultadoOperacion } from "@/lib/types";
+import type { JournalRow, MotivoCierre, TipoOperacion } from "@/lib/types";
 import { calcOperacion, calcTrade, round2, validateTradeInputs } from "@/lib/journal/calculations";
 import { saveTrade } from "@/lib/journal/actions";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 
 interface TradeFormProps {
   journal: JournalRow;
@@ -27,6 +26,7 @@ const DEFAULT_SL = 30;
 const DEFAULT_TP = DEFAULT_SL * DEFAULT_RATIO_RB;
 const DEFAULT_RIESGO_PCT = 1;
 const INSTRUMENTO = "NAS100";
+type MotivoCierreRegistro = Exclude<MotivoCierre, "SIN_ESPECIFICAR">;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -58,9 +58,10 @@ export function TradeForm({ journal }: TradeFormProps) {
   const [pips, setPips] = useState(0);
   const [porcParciales, setPorcParciales] = useState(0);
   const [tipo, setTipo] = useState<TipoOperacion>("SELL");
-  const [resultadoOperacion, setResultadoOperacion] = useState<ResultadoOperacion>("POSITIVO");
+  const [motivoCierre, setMotivoCierre] = useState<MotivoCierreRegistro | "">("");
   const [observaciones, setObservaciones] = useState("");
   const [precioEntrada, setPrecioEntrada] = useState(0);
+  const [precioSalida, setPrecioSalida] = useState(0);
 
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -101,12 +102,6 @@ export function TradeForm({ journal }: TradeFormProps) {
 
   function handleValorActualChange(value: number) {
     setValorActualMetaTrader(value);
-    setResultadoOperacion(
-      calcOperacion({
-        valorActualMetaTrader: value,
-        valorInicialMetaTrader: cuentaActualParaRiesgo,
-      }).resultadoOperacion
-    );
   }
 
   function handleSlChange(value: number) {
@@ -126,13 +121,14 @@ export function TradeForm({ journal }: TradeFormProps) {
   function resetForm() {
     setValorActualMetaTrader(0);
     setPrecioEntrada(0);
+    setPrecioSalida(0);
     setTp(DEFAULT_TP);
     setSl(DEFAULT_SL);
     setRatioRB(DEFAULT_RATIO_RB);
     setPips(0);
     setPorcParciales(0);
     setTipo("SELL");
-    setResultadoOperacion("POSITIVO");
+    setMotivoCierre("");
     setObservaciones("");
   }
 
@@ -153,6 +149,10 @@ export function TradeForm({ journal }: TradeFormProps) {
       setError(validationErrors.join(" "));
       return;
     }
+    if (!motivoCierre) {
+      setError("Selecciona cómo se cerró el trade.");
+      return;
+    }
 
     startTransition(async () => {
       const result = await saveTrade({
@@ -165,11 +165,12 @@ export function TradeForm({ journal }: TradeFormProps) {
         pips,
         porcParciales,
         tipo,
-        resultadoOperacion,
+        motivoCierre,
         observaciones: observaciones || undefined,
         precioEntrada: precioEntrada || undefined,
         precioSl: preciosNivel.precioSl || undefined,
         precioTp: preciosNivel.precioTp || undefined,
+        precioSalida: precioSalida || undefined,
       });
 
       if (result.error) {
@@ -198,24 +199,7 @@ export function TradeForm({ journal }: TradeFormProps) {
             />
           </Field>
           <ReadOnlyField label="Operación" value={operacion.valorOperacion} />
-          <Field label="Resultado Trade">
-            <button
-              type="button"
-              onClick={() =>
-                setResultadoOperacion((prev) =>
-                  prev === "POSITIVO" ? "NEGATIVO" : "POSITIVO"
-                )
-              }
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium",
-                resultadoOperacion === "POSITIVO"
-                  ? "bg-success text-success-foreground"
-                  : "bg-destructive text-destructive-foreground"
-              )}
-            >
-              {resultadoOperacion}
-            </button>
-          </Field>
+          <ReadOnlyField label="Resultado Trade" value={operacion.resultadoOperacion} />
         </CardContent>
       </Card>
 
@@ -281,14 +265,16 @@ export function TradeForm({ journal }: TradeFormProps) {
               onChange={(e) => setTp(Number(e.target.value))}
             />
           </Field>
-          <Field label="PIPS">
+          <Field label="PIPS Parciales">
             <Input
               type="number"
               step="0.01"
-              min="0"
               value={pips}
               onChange={(e) => setPips(Number(e.target.value))}
             />
+            <p className="text-xs text-muted-foreground">
+              Pips realizados al cerrar el porcentaje parcial. Puede ser negativo.
+            </p>
           </Field>
           <Field label="Parciales %">
             <Input
@@ -307,7 +293,7 @@ export function TradeForm({ journal }: TradeFormProps) {
         <CardHeader>
           <CardTitle>Precios</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Precio de Entrada">
             <Input
               type="number"
@@ -319,6 +305,48 @@ export function TradeForm({ journal }: TradeFormProps) {
           </Field>
           <ReadOnlyField label={`Precio SL (${tipo})`} value={preciosNivel.precioSl || "-"} />
           <ReadOnlyField label={`Precio TP (${tipo})`} value={preciosNivel.precioTp || "-"} />
+          <Field label="Precio de Salida (opcional)">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={precioSalida || ""}
+              onChange={(e) => setPrecioSalida(Number(e.target.value) || 0)}
+            />
+          </Field>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Cierre del Trade</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Motivo de cierre">
+            <Select
+              value={motivoCierre}
+              onValueChange={(value) => setMotivoCierre(value as MotivoCierreRegistro)}
+            >
+              <SelectTrigger className="w-full" aria-label="Motivo de cierre">
+                <SelectValue placeholder="Selecciona una opción" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TAKE_PROFIT">Take Profit alcanzado</SelectItem>
+                <SelectItem value="STOP_LOSS">Stop Loss alcanzado</SelectItem>
+                <SelectItem value="MANUAL">Cierre manual anticipado</SelectItem>
+                <SelectItem value="BREAK_EVEN">Break-even</SelectItem>
+                <SelectItem value="PARCIAL">Cierre parcial</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <ReadOnlyField
+            label="R realizado"
+            value={
+              tradeCalc.riesgoValor > 0
+                ? round2(operacion.valorOperacion / tradeCalc.riesgoValor)
+                : 0
+            }
+          />
         </CardContent>
       </Card>
 
@@ -331,9 +359,11 @@ export function TradeForm({ journal }: TradeFormProps) {
           <ReadOnlyField label="Ratio real" value={sl > 0 ? round2(tp / sl) : 0} />
           <ReadOnlyField label="Lotaje" value={tradeCalc.lotaje} />
           <ReadOnlyField label="Lotaje Parcial" value={tradeCalc.lotajeParcial} />
+          <ReadOnlyField label="Lotaje Restante" value={tradeCalc.lotajeRestante} />
           <ReadOnlyField label="Ganancia ($)" value={tradeCalc.gananciaEstimada} />
           <ReadOnlyField label="Pérdida ($)" value={tradeCalc.perdidaEstimada} />
           <ReadOnlyField label="Ganancia Parcial" value={tradeCalc.gananciaParcial} />
+          <ReadOnlyField label="Ganancia Restante al TP" value={tradeCalc.gananciaRestante} />
           <ReadOnlyField label="Ganancia Total Parcial" value={tradeCalc.gananciaTotalParcial} />
         </CardContent>
       </Card>

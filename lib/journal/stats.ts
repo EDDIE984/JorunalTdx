@@ -10,6 +10,10 @@ export interface JournalStats {
   rachaPerdidasMaxima: number;
   drawdownMaximoValor: number;
   drawdownMaximoPct: number;
+  cierresManuales: number;
+  cierresManualesPct: number;
+  breakEven: number;
+  rPromedio: number;
 }
 
 function sortByFecha(details: JournalDetailRow[]): JournalDetailRow[] {
@@ -20,7 +24,7 @@ export function calcRachaPerdidas(details: JournalDetailRow[]): { actual: number
   let corriendo = 0;
   let maxima = 0;
   for (const d of sortByFecha(details)) {
-    if (d.resultado_operacion === "NEGATIVO") {
+    if (d.valor_operacion < 0) {
       corriendo += 1;
       maxima = Math.max(maxima, corriendo);
     } else {
@@ -58,6 +62,18 @@ export function calcPerdidaDia(details: JournalDetailRow[], referencia: Date): n
 
 export function calcJournalStats(details: JournalDetailRow[], valorInicio: number): JournalStats {
   const totalTrades = details.length;
+  const cierresManuales = details.filter((d) => d.motivo_cierre === "MANUAL").length;
+  const breakEven = details.filter((d) => d.valor_operacion === 0).length;
+  const cierresManualesPct =
+    totalTrades > 0 ? round2((cierresManuales / totalTrades) * 100) : 0;
+  const tradesConRiesgo = details.filter((d) => d.riesgo_valor > 0);
+  const rPromedio =
+    tradesConRiesgo.length > 0
+      ? round2(
+          tradesConRiesgo.reduce((sum, d) => sum + d.valor_operacion / d.riesgo_valor, 0) /
+            tradesConRiesgo.length
+        )
+      : 0;
   const { actual: rachaPerdidasActual, maxima: rachaPerdidasMaxima } = calcRachaPerdidas(details);
   const { valor: drawdownMaximoValor, pct: drawdownMaximoPct } = calcDrawdownMaximo(
     details,
@@ -74,11 +90,17 @@ export function calcJournalStats(details: JournalDetailRow[], valorInicio: numbe
       rachaPerdidasMaxima,
       drawdownMaximoValor,
       drawdownMaximoPct,
+      cierresManuales,
+      cierresManualesPct,
+      breakEven,
+      rPromedio,
     };
   }
 
-  const wins = details.filter((d) => d.resultado_operacion === "POSITIVO").length;
-  const winRate = round2((wins / totalTrades) * 100);
+  const wins = details.filter((d) => d.valor_operacion > 0).length;
+  const losses = details.filter((d) => d.valor_operacion < 0).length;
+  const tradesDecisivos = wins + losses;
+  const winRate = tradesDecisivos > 0 ? round2((wins / tradesDecisivos) * 100) : 0;
 
   const gananciaAcumulada = round2(
     details.reduce((sum, d) => sum + (d.valor_operacion ?? 0), 0)
@@ -88,9 +110,11 @@ export function calcJournalStats(details: JournalDetailRow[], valorInicio: numbe
     details.reduce(
       (sum, d) =>
         sum +
-        (d.resultado_operacion === "POSITIVO"
+        (d.valor_operacion > 0
           ? d.ganancia_estimada ?? 0
-          : d.perdida_estimada ?? 0),
+          : d.valor_operacion < 0
+            ? d.perdida_estimada ?? 0
+            : 0),
       0
     )
   );
@@ -104,6 +128,10 @@ export function calcJournalStats(details: JournalDetailRow[], valorInicio: numbe
     rachaPerdidasMaxima,
     drawdownMaximoValor,
     drawdownMaximoPct,
+    cierresManuales,
+    cierresManualesPct,
+    breakEven,
+    rPromedio,
   };
 }
 
@@ -157,12 +185,99 @@ export function calcPnlPorPeriodo(
 export interface WinLossDistribucion {
   wins: number;
   losses: number;
+  breakEven: number;
 }
 
 export function calcWinLossDistribucion(details: JournalDetailRow[]): WinLossDistribucion {
   return {
-    wins: details.filter((d) => d.resultado_operacion === "POSITIVO").length,
-    losses: details.filter((d) => d.resultado_operacion === "NEGATIVO").length,
+    wins: details.filter((d) => d.valor_operacion > 0).length,
+    losses: details.filter((d) => d.valor_operacion < 0).length,
+    breakEven: details.filter((d) => d.valor_operacion === 0).length,
+  };
+}
+
+export interface PartialPipsPoint {
+  pips: number;
+  gananciaTotal: number;
+  gananciaParcial: number;
+  porcentaje: number;
+}
+
+export interface PartialAnalysisStats {
+  partialTrades: number;
+  partialTradesPct: number;
+  pipsParcialesPromedio: number;
+  rParcialPromedio: number;
+  gananciaParcialAcumulada: number;
+  gananciaRestanteAcumulada: number;
+  eficienciaParcialPct: number;
+  puntos: PartialPipsPoint[];
+}
+
+function isPartialTrade(detail: JournalDetailRow): boolean {
+  // Only records with the persisted percentage are included. Historical rows
+  // cannot be compared reliably because their partial percentage was not saved.
+  return (detail.porcentaje_parcial ?? 0) > 0;
+}
+
+function getPartialPercentage(detail: JournalDetailRow): number {
+  return detail.porcentaje_parcial ?? 0;
+}
+
+export function calcPartialAnalysis(details: JournalDetailRow[]): PartialAnalysisStats {
+  const partials = details.filter(isPartialTrade);
+  const partialTrades = partials.length;
+  const partialTradesPct = details.length > 0 ? round2((partialTrades / details.length) * 100) : 0;
+  const pipsParcialesPromedio =
+    partialTrades > 0
+      ? round2(
+          partials.reduce((sum, detail) => sum + detail.num_pips_regla_parciales, 0) /
+            partialTrades
+        )
+      : 0;
+  const tradesConRiesgo = partials.filter((detail) => detail.riesgo_valor > 0);
+  const rParcialPromedio =
+    tradesConRiesgo.length > 0
+      ? round2(
+          tradesConRiesgo.reduce(
+            (sum, detail) => sum + detail.ganancia_parcial_parciales / detail.riesgo_valor,
+            0
+          ) / tradesConRiesgo.length
+        )
+      : 0;
+  const gananciaParcialAcumulada = round2(
+    partials.reduce((sum, detail) => sum + detail.ganancia_parcial_parciales, 0)
+  );
+  const gananciaRestanteAcumulada = round2(
+    partials.reduce((sum, detail) => sum + (detail.ganancia_restante_parcial ?? 0), 0)
+  );
+  const gananciaTotalParcialAcumulada = partials.reduce(
+    (sum, detail) => sum + detail.ganancia_total_parciales,
+    0
+  );
+  const gananciaTpAcumulada = partials.reduce(
+    (sum, detail) => sum + detail.ganancia_estimada,
+    0
+  );
+  const eficienciaParcialPct =
+    gananciaTpAcumulada !== 0
+      ? round2((gananciaTotalParcialAcumulada / gananciaTpAcumulada) * 100)
+      : 0;
+
+  return {
+    partialTrades,
+    partialTradesPct,
+    pipsParcialesPromedio,
+    rParcialPromedio,
+    gananciaParcialAcumulada,
+    gananciaRestanteAcumulada,
+    eficienciaParcialPct,
+    puntos: partials.map((detail) => ({
+      pips: detail.num_pips_regla_parciales,
+      gananciaTotal: detail.ganancia_total_parciales,
+      gananciaParcial: detail.ganancia_parcial_parciales,
+      porcentaje: getPartialPercentage(detail),
+    })),
   };
 }
 
@@ -178,10 +293,10 @@ export function calcExpectancy(details: JournalDetailRow[]): ExpectancyResult {
   }
 
   const ganancias = details
-    .filter((d) => d.resultado_operacion === "POSITIVO")
+    .filter((d) => d.valor_operacion > 0)
     .map((d) => d.valor_operacion);
   const perdidas = details
-    .filter((d) => d.resultado_operacion === "NEGATIVO")
+    .filter((d) => d.valor_operacion < 0)
     .map((d) => Math.abs(d.valor_operacion));
 
   const winRate = ganancias.length / totalTrades;

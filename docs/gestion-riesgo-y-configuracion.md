@@ -146,6 +146,9 @@ Columnas nuevas sobre el esquema original:
 | `precio_entrada` | numeric(14,2) | Nullable |
 | `precio_sl` | numeric(14,2) | Nullable, calculado según Tipo |
 | `precio_tp` | numeric(14,2) | Nullable, calculado según Tipo |
+| `porcentaje_parcial` | numeric(6,2) | Nullable en históricos; porcentaje exacto cerrado |
+| `lotaje_restante` | numeric(14,4) | Nullable en históricos; volumen que continúa al TP |
+| `ganancia_restante_parcial` | numeric(14,2) | Nullable en históricos; ganancia del volumen restante al TP |
 
 ### Migraciones aplicadas (en orden, `supabase/migrations/`)
 
@@ -155,6 +158,8 @@ Columnas nuevas sobre el esquema original:
    en `journal_details`.
 3. `0003_limites_riesgo.sql` — `limite_perdida_diaria_pct`,
    `limite_racha_perdidas` en `journals`.
+4. `0004_motivo_cierre.sql` — motivo y precio de salida del trade.
+5. `0005_datos_parciales.sql` — porcentaje, lotaje restante y ganancia restante del parcial.
 
 `supabase/schema.sql` ya incluye todos estos campos para instalaciones
 nuevas — las migraciones son solo para llevar la base ya creada al mismo

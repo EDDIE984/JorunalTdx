@@ -43,14 +43,17 @@ create table if not exists journal_details (
   instrumento text,
   lotaje numeric(14,4),
   lotaje_parcial numeric(14,4),
+  porcentaje_parcial numeric(6,2),
+  lotaje_restante numeric(14,4),
   tp numeric(14,2),
   sl numeric(14,2),
   ganancia_estimada numeric(14,2),
   perdida_estimada numeric(14,2),
-  resultado_operacion text check (resultado_operacion in ('POSITIVO','NEGATIVO')),
+  resultado_operacion text check (resultado_operacion in ('POSITIVO','NEGATIVO','BREAK_EVEN')),
   valor_resultado numeric(14,2),
   num_pips_regla_parciales numeric(14,2),
   ganancia_parcial_parciales numeric(14,2),
+  ganancia_restante_parcial numeric(14,2),
   ganancia_total_parciales numeric(14,2),
   valor_cuenta numeric(14,2),
   fecha_operacion timestamptz not null default now(),
@@ -61,6 +64,9 @@ create table if not exists journal_details (
   precio_entrada numeric(14,2),
   precio_sl numeric(14,2),
   precio_tp numeric(14,2),
+  precio_salida numeric(14,2),
+  motivo_cierre text not null default 'SIN_ESPECIFICAR'
+    check (motivo_cierre in ('TAKE_PROFIT','STOP_LOSS','MANUAL','BREAK_EVEN','PARCIAL','SIN_ESPECIFICAR')),
   created_at timestamptz not null default now()
 );
 

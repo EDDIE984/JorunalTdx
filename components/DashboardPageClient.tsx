@@ -5,6 +5,7 @@ import { StatCard } from "@/components/StatCard";
 import { EquityCurveChart } from "@/components/EquityCurveChart";
 import { PnlPorPeriodoChart } from "@/components/PnlPorPeriodoChart";
 import { WinLossDonutChart } from "@/components/WinLossDonutChart";
+import { PartialAnalyticsPanel } from "@/components/PartialAnalyticsPanel";
 import {
   calcEquityCurve,
   calcExpectancy,
@@ -68,11 +69,18 @@ export function DashboardPageClient({
           <StatCard label="Racha Pérdidas Máxima" value={String(stats.rachaPerdidasMaxima)} />
           <StatCard label="Drawdown Máximo ($)" value={String(stats.drawdownMaximoValor)} tone="negative" />
           <StatCard label="Drawdown Máximo (%)" value={`${stats.drawdownMaximoPct}%`} tone="negative" />
+          <StatCard
+            label="Cierres Manuales"
+            value={`${stats.cierresManuales} (${stats.cierresManualesPct}%)`}
+          />
+          <StatCard label="Break-even" value={String(stats.breakEven)} />
+          <StatCard label="R Promedio" value={`${stats.rPromedio}R`} tone="accent" />
         </section>
 
         <EquityCurveChart data={equityCurve} />
         <PnlPorPeriodoChart details={details} />
         <WinLossDonutChart data={winLoss} />
+        <PartialAnalyticsPanel details={details} />
       </div>
     </AppShell>
   );

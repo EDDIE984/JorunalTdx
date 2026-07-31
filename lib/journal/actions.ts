@@ -190,14 +190,15 @@ const saveTradeSchema = z.object({
   pipValue: z.coerce.number().positive(),
   tp: z.coerce.number().positive(),
   sl: z.coerce.number().positive(),
-  pips: z.coerce.number().min(0),
+  pips: z.coerce.number(),
   porcParciales: z.coerce.number().min(0).max(100),
   tipo: z.enum(["BUY", "SELL"]),
-  resultadoOperacion: z.enum(["POSITIVO", "NEGATIVO"]),
+  motivoCierre: z.enum(["TAKE_PROFIT", "STOP_LOSS", "MANUAL", "BREAK_EVEN", "PARCIAL"]),
   observaciones: z.string().trim().max(250).optional().nullable(),
   precioEntrada: z.coerce.number().positive().optional(),
   precioSl: z.coerce.number().optional(),
   precioTp: z.coerce.number().optional(),
+  precioSalida: z.coerce.number().positive().optional(),
 });
 
 export type SaveTradeInput = z.infer<typeof saveTradeSchema>;
@@ -278,16 +279,18 @@ export async function saveTrade(input: SaveTradeInput): Promise<SaveTradeState> 
     pipValue: data.pipValue,
   });
 
-  const { valorOperacion } = calcOperacion({
+  const { valorOperacion, resultadoOperacion } = calcOperacion({
     valorActualMetaTrader: data.valorActualMetaTrader,
     valorInicialMetaTrader: cuentaActualParaRiesgo,
   });
 
   const valorResultado = round2(
     valorCuentaAnterior +
-      (data.resultadoOperacion === "POSITIVO"
+      (resultadoOperacion === "POSITIVO"
         ? tradeCalc.gananciaEstimada
-        : tradeCalc.perdidaEstimada)
+        : resultadoOperacion === "NEGATIVO"
+          ? tradeCalc.perdidaEstimada
+          : 0)
   );
 
   const { error: insertDetailError } = await supabase.from("journal_details").insert({
@@ -298,14 +301,17 @@ export async function saveTrade(input: SaveTradeInput): Promise<SaveTradeState> 
     instrumento: data.instrumento,
     lotaje: tradeCalc.lotaje,
     lotaje_parcial: tradeCalc.lotajeParcial,
+    porcentaje_parcial: data.porcParciales,
+    lotaje_restante: tradeCalc.lotajeRestante,
     tp: data.tp,
     sl: data.sl,
     ganancia_estimada: tradeCalc.gananciaEstimada,
     perdida_estimada: tradeCalc.perdidaEstimada,
-    resultado_operacion: data.resultadoOperacion,
+    resultado_operacion: resultadoOperacion,
     valor_resultado: valorResultado,
     num_pips_regla_parciales: data.pips,
     ganancia_parcial_parciales: tradeCalc.gananciaParcial,
+    ganancia_restante_parcial: tradeCalc.gananciaRestante,
     ganancia_total_parciales: tradeCalc.gananciaTotalParcial,
     valor_cuenta: journal.valor_inicio,
     valor_metatrader: data.valorActualMetaTrader,
@@ -315,6 +321,8 @@ export async function saveTrade(input: SaveTradeInput): Promise<SaveTradeState> 
     precio_entrada: data.precioEntrada ?? null,
     precio_sl: data.precioSl ?? null,
     precio_tp: data.precioTp ?? null,
+    precio_salida: data.precioSalida ?? null,
+    motivo_cierre: data.motivoCierre,
   });
 
   if (insertDetailError) {

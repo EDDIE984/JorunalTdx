@@ -47,10 +47,12 @@ Fórmula estándar de gestión de riesgo, en vez de la original que ignoraba el 
 - `riesgoValor = round2(cuentaActual * riesgoPct / 100)` — cuánto dinero se arriesga en este trade.
 - `lotaje = round2(riesgoValor / (SL * pipValue))` — el lote sale de despejar la ecuación de riesgo, no de una fórmula genérica.
 - `lotajeParcial = round2((lotaje * porcParciales) / 100)`
+- `lotajeRestante = round2(lotaje - lotajeParcial)`
 - `gananciaEstimada = round2(lotaje * TP * pipValue)`
 - `perdidaEstimada = round2(lotaje * SL * pipValue * -1)` — por construcción, esto debe ser igual a `-riesgoValor`; se muestra en el UI como confirmación ("Estás arriesgando $X = Y% de tu cuenta") para que el usuario verifique que el riesgo real coincide con el planeado.
-- `gananciaParcial = round2(lotajeParcial * PIPS * pipValue)`
-- `gananciaTotalParcial = round2((lotajeParcial * TP * pipValue) + gananciaParcial)`
+- `gananciaParcial = round2(lotajeParcial * PIPS_Parciales * pipValue)` — PIPS_Parciales puede ser negativo si la parte se cierra con pérdida.
+- `gananciaRestante = round2(lotajeRestante * TP * pipValue)`
+- `gananciaTotalParcial = round2(gananciaParcial + gananciaRestante)`
 - Validación: `SL > 0`, `TP > 0`, `pipValue > 0`, `riesgoPct > 0` — bloquear el guardado si no se cumplen (evita división por cero y trades con riesgo mal definido).
 
 ### Bugs/deficiencias detectadas en el original (se corrigen en la migración, no se replican)

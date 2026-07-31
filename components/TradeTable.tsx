@@ -22,6 +22,15 @@ function formatDate(value: string) {
   });
 }
 
+const MOTIVO_CIERRE_LABEL = {
+  TAKE_PROFIT: "Take Profit",
+  STOP_LOSS: "Stop Loss",
+  MANUAL: "Manual anticipado",
+  BREAK_EVEN: "Break-even",
+  PARCIAL: "Parcial",
+  SIN_ESPECIFICAR: "Sin especificar",
+} as const;
+
 export function TradeTable({ details }: { details: JournalDetailRow[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
@@ -91,6 +100,9 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
                 "Fecha",
                 "Operación",
                 "Valor Operación",
+                "Resultado",
+                "Motivo Cierre",
+                "R Realizado",
                 "Valor MetaTrader",
                 "Instrumento",
                 "% Riesgo",
@@ -98,12 +110,16 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
                 "Riesgo $",
                 "Lotaje",
                 "Lotaje Parcial",
+                "Lotaje Restante",
+                "Parciales %",
                 "TP",
                 "SL",
+                "Precio Salida",
                 "Ganancia Estimada",
                 "Perdida Estimada",
-                "PIPS Parcial",
+                "PIPS Parciales",
                 "Ganancia Parcial",
+                "Ganancia Restante",
                 "Ganancia Total Parcial",
                 "",
               ].map((h) => (
@@ -113,12 +129,21 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
           </TableHeader>
           <TableBody>
             {details.map((row) => {
-              const negative = row.valor_operacion <= 0;
+              const negative = row.valor_operacion < 0;
               return (
                 <TableRow key={row.id} className={negative ? "text-destructive" : ""}>
                   <TableCell>{formatDate(row.fecha_operacion)}</TableCell>
                   <TableCell>{row.tipo}</TableCell>
                   <TableCell>{row.valor_operacion}</TableCell>
+                  <TableCell>{row.resultado_operacion}</TableCell>
+                  <TableCell>
+                    {MOTIVO_CIERRE_LABEL[row.motivo_cierre] ?? "Sin especificar"}
+                  </TableCell>
+                  <TableCell>
+                    {row.riesgo_valor > 0
+                      ? `${Math.round((row.valor_operacion / row.riesgo_valor) * 100) / 100}R`
+                      : "—"}
+                  </TableCell>
                   <TableCell>
                     {editingId === row.id ? (
                       <input
@@ -150,12 +175,18 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
                   <TableCell>{row.riesgo_valor}</TableCell>
                   <TableCell>{row.lotaje}</TableCell>
                   <TableCell>{row.lotaje_parcial}</TableCell>
+                  <TableCell>
+                    {row.lotaje_restante ?? Math.round((row.lotaje - row.lotaje_parcial) * 100) / 100}
+                  </TableCell>
+                  <TableCell>{row.porcentaje_parcial ?? "—"}</TableCell>
                   <TableCell>{row.tp}</TableCell>
                   <TableCell>{row.sl}</TableCell>
+                  <TableCell>{row.precio_salida ?? "—"}</TableCell>
                   <TableCell>{row.ganancia_estimada}</TableCell>
                   <TableCell>{row.perdida_estimada}</TableCell>
                   <TableCell>{row.num_pips_regla_parciales}</TableCell>
                   <TableCell>{row.ganancia_parcial_parciales}</TableCell>
+                  <TableCell>{row.ganancia_restante_parcial ?? "—"}</TableCell>
                   <TableCell>{row.ganancia_total_parciales}</TableCell>
                   <TableCell>
                     <button
@@ -173,7 +204,7 @@ export function TradeTable({ details }: { details: JournalDetailRow[] }) {
             })}
             {details.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={18} className="text-center text-muted-foreground">
+                <TableCell colSpan={25} className="text-center text-muted-foreground">
                   Aún no hay trades registrados.
                 </TableCell>
               </TableRow>
