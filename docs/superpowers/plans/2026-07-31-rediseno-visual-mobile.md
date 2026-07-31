@@ -16,6 +16,7 @@
 - **No cambiar lógica de negocio.** Cálculos (`lib/journal/calculations.ts`, `lib/journal/stats.ts`), validaciones, y server actions (`lib/journal/actions.ts`) no se tocan en este plan — solo el markup/estilos de los componentes de UI.
 - **Sin framework de tests en el proyecto.** Verificar cada tarea con `npx tsc --noEmit`. La verificación visual final es manual (dev server + navegador, y el usuario probando en su celular real) — no hay `chromium-cli` ni credenciales de login disponibles para automatizarla.
 - Seguir el patrón de imports ya usado en el repo: alias `@/` para todo (`@/components/ui/button`, `@/lib/journal/stats`, etc.).
+- **Orden de tareas es intencional y no intercambiable entre sí donde haya dependencia:** la Task 3 (`StatCard` con `tone`) debe completarse antes que la Task 4 (wiring de `AppShell`, que ya consume `tone` en `DashboardPageClient`), porque de lo contrario el build queda roto entre tareas.
 
 ---
 
@@ -108,8 +109,8 @@ git commit -m "Set fintech blue palette, drop dark mode tokens"
 - Create: `components/AppShell.tsx`
 
 **Interfaces:**
-- Consumes: `LogoutButton` de `@/components/LogoutButton` (ya existente, sin cambios), iconos `BookOpenText`, `LayoutDashboard`, `Settings`, `LogOut` de `lucide-react`, `usePathname` de `next/navigation`, `cn` de `@/lib/utils`.
-- Produces (usado en Task 3): `export function AppShell({ activo, nombre, titulo, children }: { activo: "journal" | "dashboard" | "settings"; nombre: string; titulo: string; children: React.ReactNode }): JSX.Element`
+- Consumes: `LogoutButton` de `@/components/LogoutButton` (ya existente, sin cambios), iconos `BookOpenText`, `LayoutDashboard`, `Settings` de `lucide-react`, `usePathname` de `next/navigation`, `cn` de `@/lib/utils`.
+- Produces (usado en Task 4): `export function AppShell({ activo, nombre, titulo, children }: { activo: "journal" | "dashboard" | "settings"; nombre: string; titulo: string; children: React.ReactNode }): JSX.Element`
 
 - [ ] **Step 1: Crear el componente**
 
@@ -199,7 +200,7 @@ export function AppShell({ activo, nombre, titulo, children }: AppShellProps) {
 - [ ] **Step 2: Type-check**
 
 Run: `npx tsc --noEmit`
-Expected: sin salida (sin errores). Nota: `AppShell` no se usa todavía en ninguna página en este punto — eso es esperado hasta la Task 3.
+Expected: sin salida (sin errores). Nota: `AppShell` no se usa todavía en ninguna página en este punto — eso es esperado hasta la Task 4.
 
 - [ ] **Step 3: Commit**
 
@@ -210,7 +211,108 @@ git commit -m "Add shared AppShell navigation (blue header + mobile tab bar)"
 
 ---
 
-### Task 3: Usar `AppShell` en las 3 páginas con navegación
+### Task 3: `StatCard` con prop `tone` + call sites
+
+**Files:**
+- Modify: `components/StatCard.tsx`
+- Modify: `components/JournalStatsPanel.tsx`
+
+**Interfaces:**
+- Produces (consumido por `JournalStatsPanel.tsx` en este mismo task, y luego por `DashboardPageClient.tsx` en la Task 4): `export function StatCard({ label, value, tone }: { label: string; value: string; tone?: "neutral" | "accent" | "positive" | "negative" }): JSX.Element`. `tone` es opcional, default `"neutral"` — todas las llamadas existentes sin `tone` siguen compilando igual.
+
+- [ ] **Step 1: `components/StatCard.tsx`**
+
+Reemplazar el archivo completo por:
+
+```typescript
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+type Tone = "neutral" | "accent" | "positive" | "negative";
+
+const TONE_CLASS: Record<Tone, string> = {
+  neutral: "text-foreground",
+  accent: "text-primary",
+  positive: "text-success",
+  negative: "text-destructive",
+};
+
+export function StatCard({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: Tone;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className={cn("text-lg font-semibold", TONE_CLASS[tone])}>{value}</span>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+- [ ] **Step 2: Actualizar `components/JournalStatsPanel.tsx`**
+
+Reemplazar el archivo completo por:
+
+```typescript
+import type { JournalDetailRow } from "@/lib/types";
+import { calcJournalStats } from "@/lib/journal/stats";
+import { StatCard } from "@/components/StatCard";
+
+export function JournalStatsPanel({
+  details,
+  valorInicio,
+}: {
+  details: JournalDetailRow[];
+  valorInicio: number;
+}) {
+  const stats = calcJournalStats(details, valorInicio);
+
+  return (
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <StatCard label="Total Trades" value={String(stats.totalTrades)} />
+      <StatCard label="Win Rate" value={`${stats.winRate}%`} tone="accent" />
+      <StatCard
+        label="Ganancia Acumulada (real)"
+        value={String(stats.gananciaAcumulada)}
+        tone={stats.gananciaAcumulada >= 0 ? "positive" : "negative"}
+      />
+      <StatCard
+        label="Ganancia Acumulada (estimada)"
+        value={String(stats.gananciaEstimadaAcumulada)}
+        tone={stats.gananciaEstimadaAcumulada >= 0 ? "positive" : "negative"}
+      />
+      <StatCard label="Racha Pérdidas Actual" value={String(stats.rachaPerdidasActual)} />
+      <StatCard label="Racha Pérdidas Máxima" value={String(stats.rachaPerdidasMaxima)} />
+      <StatCard label="Drawdown Máximo ($)" value={String(stats.drawdownMaximoValor)} tone="negative" />
+      <StatCard label="Drawdown Máximo (%)" value={`${stats.drawdownMaximoPct}%`} tone="negative" />
+    </section>
+  );
+}
+```
+
+- [ ] **Step 3: Type-check**
+
+Run: `npx tsc --noEmit`
+Expected: sin salida (sin errores).
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add components/StatCard.tsx components/JournalStatsPanel.tsx
+git commit -m "Add tone prop to StatCard and colorize journal stats"
+```
+
+---
+
+### Task 4: Usar `AppShell` en las 3 páginas con navegación
 
 **Files:**
 - Modify: `components/JournalPageClient.tsx`
@@ -218,7 +320,7 @@ git commit -m "Add shared AppShell navigation (blue header + mobile tab bar)"
 - Modify: `components/DashboardPageClient.tsx`
 
 **Interfaces:**
-- Consumes: `AppShell` de `@/components/AppShell` (Task 2).
+- Consumes: `AppShell` de `@/components/AppShell` (Task 2), `StatCard` con prop `tone` de `@/components/StatCard` (Task 3).
 
 - [ ] **Step 1: `components/JournalPageClient.tsx`**
 
@@ -374,9 +476,12 @@ export function DashboardPageClient({
 }
 ```
 
-Nota: este paso introduce la prop `tone` en `StatCard`, que todavía no existe — eso se implementa en la Task 5. El type-check de este paso fallará hasta completar la Task 5; eso es esperado, seguir al siguiente paso de todas formas y dejar la verificación de tipos para el final de la Task 5.
+- [ ] **Step 4: Type-check**
 
-- [ ] **Step 4: Commit**
+Run: `npx tsc --noEmit`
+Expected: sin salida (sin errores). La prop `tone` usada arriba ya existe en `StatCard` desde la Task 3.
+
+- [ ] **Step 5: Commit**
 
 ```bash
 git add components/JournalPageClient.tsx components/SettingsPageClient.tsx components/DashboardPageClient.tsx
@@ -385,7 +490,7 @@ git commit -m "Wire AppShell into Journal, Settings, and Dashboard pages"
 
 ---
 
-### Task 4: Rediseñar Login
+### Task 5: Rediseñar Login
 
 **Files:**
 - Modify: `components/LoginForm.tsx`
@@ -484,107 +589,6 @@ Expected: sin salida (sin errores).
 ```bash
 git add components/LoginForm.tsx app/login/page.tsx
 git commit -m "Redesign login screen with shadcn Card/Input/Button"
-```
-
----
-
-### Task 5: `StatCard` con prop `tone` + call sites
-
-**Files:**
-- Modify: `components/StatCard.tsx`
-- Modify: `components/JournalStatsPanel.tsx`
-
-**Interfaces:**
-- Produces (consumido por `DashboardPageClient.tsx`, ya escrito en Task 3, y por `JournalStatsPanel.tsx` en este task): `export function StatCard({ label, value, tone }: { label: string; value: string; tone?: "neutral" | "accent" | "positive" | "negative" }): JSX.Element`. `tone` es opcional, default `"neutral"` — todas las llamadas existentes sin `tone` siguen compilando igual.
-
-- [ ] **Step 1: `components/StatCard.tsx`**
-
-Reemplazar el archivo completo por:
-
-```typescript
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-
-type Tone = "neutral" | "accent" | "positive" | "negative";
-
-const TONE_CLASS: Record<Tone, string> = {
-  neutral: "text-foreground",
-  accent: "text-primary",
-  positive: "text-success",
-  negative: "text-destructive",
-};
-
-export function StatCard({
-  label,
-  value,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  tone?: Tone;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className={cn("text-lg font-semibold", TONE_CLASS[tone])}>{value}</span>
-      </CardContent>
-    </Card>
-  );
-}
-```
-
-- [ ] **Step 2: Actualizar `components/JournalStatsPanel.tsx`**
-
-Reemplazar el archivo completo por:
-
-```typescript
-import type { JournalDetailRow } from "@/lib/types";
-import { calcJournalStats } from "@/lib/journal/stats";
-import { StatCard } from "@/components/StatCard";
-
-export function JournalStatsPanel({
-  details,
-  valorInicio,
-}: {
-  details: JournalDetailRow[];
-  valorInicio: number;
-}) {
-  const stats = calcJournalStats(details, valorInicio);
-
-  return (
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <StatCard label="Total Trades" value={String(stats.totalTrades)} />
-      <StatCard label="Win Rate" value={`${stats.winRate}%`} tone="accent" />
-      <StatCard
-        label="Ganancia Acumulada (real)"
-        value={String(stats.gananciaAcumulada)}
-        tone={stats.gananciaAcumulada >= 0 ? "positive" : "negative"}
-      />
-      <StatCard
-        label="Ganancia Acumulada (estimada)"
-        value={String(stats.gananciaEstimadaAcumulada)}
-        tone={stats.gananciaEstimadaAcumulada >= 0 ? "positive" : "negative"}
-      />
-      <StatCard label="Racha Pérdidas Actual" value={String(stats.rachaPerdidasActual)} />
-      <StatCard label="Racha Pérdidas Máxima" value={String(stats.rachaPerdidasMaxima)} />
-      <StatCard label="Drawdown Máximo ($)" value={String(stats.drawdownMaximoValor)} tone="negative" />
-      <StatCard label="Drawdown Máximo (%)" value={`${stats.drawdownMaximoPct}%`} tone="negative" />
-    </section>
-  );
-}
-```
-
-- [ ] **Step 3: Type-check (esto también valida la Task 3, que dependía de esta prop)**
-
-Run: `npx tsc --noEmit`
-Expected: sin salida (sin errores).
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add components/StatCard.tsx components/JournalStatsPanel.tsx
-git commit -m "Add tone prop to StatCard and colorize journal/dashboard stats"
 ```
 
 ---
