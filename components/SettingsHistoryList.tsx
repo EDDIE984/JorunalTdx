@@ -1,4 +1,13 @@
 import type { JournalRow } from "@/lib/types";
+import { HistoryCard } from "@/components/HistoryCard";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("es-EC", {
@@ -14,31 +23,36 @@ export function SettingsHistoryList({ history }: { history: JournalRow[] }) {
   }
 
   return (
-    <section className="rounded border border-black/10 dark:border-white/15 p-4 flex flex-col gap-3">
+    <section className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
       <h2 className="font-semibold">Historial</h2>
-      <div className="overflow-x-auto">
-        <table className="text-xs sm:text-sm w-full border-collapse">
-          <thead>
-            <tr className="text-left border-b border-black/10 dark:border-white/15">
+
+      <div className="flex flex-col gap-2 sm:hidden">
+        {history.map((row) => (
+          <HistoryCard key={row.id} row={row} />
+        ))}
+      </div>
+
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
               {["Creada", "Cerrada", "Valor Inicial", "Objetivo $", "Valor Final"].map((h) => (
-                <th key={h} className="whitespace-nowrap px-2 py-1 font-medium">
-                  {h}
-                </th>
+                <TableHead key={h}>{h}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {history.map((row) => (
-              <tr key={row.id} className="border-b border-black/5 dark:border-white/10">
-                <td className="whitespace-nowrap px-2 py-1">{formatDate(row.created_at)}</td>
-                <td className="whitespace-nowrap px-2 py-1">{formatDate(row.updated_at)}</td>
-                <td className="whitespace-nowrap px-2 py-1">{row.valor_inicio}</td>
-                <td className="whitespace-nowrap px-2 py-1">{row.valor_objetivo}</td>
-                <td className="whitespace-nowrap px-2 py-1">{row.valor_resultado_mtrader}</td>
-              </tr>
+              <TableRow key={row.id}>
+                <TableCell>{formatDate(row.created_at)}</TableCell>
+                <TableCell>{formatDate(row.updated_at)}</TableCell>
+                <TableCell>{row.valor_inicio}</TableCell>
+                <TableCell>{row.valor_objetivo}</TableCell>
+                <TableCell>{row.valor_resultado_mtrader}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );
