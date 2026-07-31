@@ -195,7 +195,7 @@ export function TradeForm({ journal }: TradeFormProps) {
               type="number"
               step="0.01"
               min="0"
-              value={valorActualMetaTrader}
+              value={valorActualMetaTrader || ""}
               onChange={(e) => handleValorActualChange(Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
@@ -298,7 +298,7 @@ export function TradeForm({ journal }: TradeFormProps) {
             <Input
               type="number"
               step="0.01"
-              value={pips}
+              value={pips || ""}
               onChange={(e) => setPips(Number(e.target.value))}
             />
             <p className="text-xs text-muted-foreground">
@@ -311,7 +311,7 @@ export function TradeForm({ journal }: TradeFormProps) {
               step="0.01"
               min="0"
               max="100"
-              value={porcParciales}
+              value={porcParciales || ""}
               onChange={(e) => setPorcParciales(Number(e.target.value))}
             />
           </Field>
