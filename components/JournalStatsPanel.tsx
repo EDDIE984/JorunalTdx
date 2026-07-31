@@ -14,16 +14,21 @@ export function JournalStatsPanel({
   return (
     <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <StatCard label="Total Trades" value={String(stats.totalTrades)} />
-      <StatCard label="Win Rate" value={`${stats.winRate}%`} />
-      <StatCard label="Ganancia Acumulada (real)" value={String(stats.gananciaAcumulada)} />
+      <StatCard label="Win Rate" value={`${stats.winRate}%`} tone="accent" />
+      <StatCard
+        label="Ganancia Acumulada (real)"
+        value={String(stats.gananciaAcumulada)}
+        tone={stats.gananciaAcumulada >= 0 ? "positive" : "negative"}
+      />
       <StatCard
         label="Ganancia Acumulada (estimada)"
         value={String(stats.gananciaEstimadaAcumulada)}
+        tone={stats.gananciaEstimadaAcumulada >= 0 ? "positive" : "negative"}
       />
       <StatCard label="Racha Pérdidas Actual" value={String(stats.rachaPerdidasActual)} />
       <StatCard label="Racha Pérdidas Máxima" value={String(stats.rachaPerdidasMaxima)} />
-      <StatCard label="Drawdown Máximo ($)" value={String(stats.drawdownMaximoValor)} />
-      <StatCard label="Drawdown Máximo (%)" value={`${stats.drawdownMaximoPct}%`} />
+      <StatCard label="Drawdown Máximo ($)" value={String(stats.drawdownMaximoValor)} tone="negative" />
+      <StatCard label="Drawdown Máximo (%)" value={`${stats.drawdownMaximoPct}%`} tone="negative" />
     </section>
   );
 }

@@ -1,8 +1,30 @@
-export function StatCard({ label, value }: { label: string; value: string }) {
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+type Tone = "neutral" | "accent" | "positive" | "negative";
+
+const TONE_CLASS: Record<Tone, string> = {
+  neutral: "text-foreground",
+  accent: "text-primary",
+  positive: "text-success",
+  negative: "text-destructive",
+};
+
+export function StatCard({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: Tone;
+}) {
   return (
-    <div className="rounded border border-black/10 dark:border-white/15 p-3 flex flex-col gap-1">
-      <span className="text-xs text-black/60 dark:text-white/60">{label}</span>
-      <span className="text-lg font-semibold">{value}</span>
-    </div>
+    <Card>
+      <CardContent className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className={cn("text-lg font-semibold", TONE_CLASS[tone])}>{value}</span>
+      </CardContent>
+    </Card>
   );
 }
