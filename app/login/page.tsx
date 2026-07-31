@@ -9,8 +9,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
-      <h1 className="text-2xl font-bold">Journal Trader</h1>
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-background p-6">
       <LoginForm />
     </div>
   );

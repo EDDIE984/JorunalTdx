@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "@/lib/auth/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const initialState: LoginState = {};
 
@@ -9,47 +13,38 @@ export function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 w-full max-w-sm">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="usuario" className="text-sm font-medium">
-          Usuario
-        </label>
-        <input
-          id="usuario"
-          name="usuario"
-          type="text"
-          required
-          autoComplete="username"
-          className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2"
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium">
-          Contraseña
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          className="rounded border border-black/15 dark:border-white/20 bg-transparent px-3 py-2"
-        />
-      </div>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-xl">Journal Trader</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form action={formAction} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="usuario">Usuario</Label>
+            <Input id="usuario" name="usuario" type="text" required autoComplete="username" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">Contraseña</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+            />
+          </div>
 
-      {state?.error ? (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {state.error}
-        </p>
-      ) : null}
+          {state?.error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {state.error}
+            </p>
+          ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded bg-black text-white dark:bg-white dark:text-black px-4 py-2 font-medium disabled:opacity-50"
-      >
-        {pending ? "Ingresando…" : "Login / Nuevo Trade"}
-      </button>
-    </form>
+          <Button type="submit" disabled={pending} className="w-full">
+            {pending ? "Ingresando…" : "Login / Nuevo Trade"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
